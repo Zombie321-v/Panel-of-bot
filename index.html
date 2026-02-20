@@ -191,45 +191,44 @@
             </div>
         </div>
     </div>
-    <script>
+            <script>
 const API_URL = 'https://smarttrader-license-default-rtdb.firebaseio.com/licenses';
 const ADMIN_PASSWORD = 'admin123';
 
-// Check if already logged in
-if (sessionStorage.getItem('adminLoggedIn') === 'true') {
-    showMainContent();
-}
+// Check login
+if (sessionStorage.getItem('adminLoggedIn') === 'true') showMainContent();
 
 // Login form
-document.getElementById('loginForm').addEventListener('submit', (e) => {
+document.getElementById('loginForm').addEventListener('submit', e => {
     e.preventDefault();
     const password = document.getElementById('loginPassword').value;
-    
     if (password === ADMIN_PASSWORD) {
-        sessionStorage.setItem('adminLoggedIn', 'true');
+        sessionStorage.setItem('adminLoggedIn','true');
         showMainContent();
     } else {
         const loginAlert = document.getElementById('loginAlert');
         loginAlert.textContent = '❌ Invalid password';
         loginAlert.style.display = 'block';
-        setTimeout(() => loginAlert.style.display = 'none', 3000);
+        setTimeout(() => loginAlert.style.display = 'none',3000);
     }
 });
 
+// Show main content
 function showMainContent() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
     loadLicenses();
 }
 
-function showAlert(message, type = 'success') {
+// Alert helper
+function showAlert(msg,type='success'){
     const alertBox = document.getElementById('alertBox');
-    alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-    setTimeout(() => alertBox.innerHTML = '', 5000);
+    alertBox.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    setTimeout(()=> alertBox.innerHTML='',5000);
 }
 
 // Create License
-document.getElementById('createForm').addEventListener('submit', async (e) => {
+document.getElementById('createForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const clientName = document.getElementById('clientName').value;
     const type = document.getElementById('licenseType').value;
@@ -237,8 +236,8 @@ document.getElementById('createForm').addEventListener('submit', async (e) => {
 
     const now = new Date();
     let expiry = new Date(now);
-    if(type === "weekly") expiry.setDate(now.getDate() + 7*duration);
-    else expiry.setMonth(now.getMonth() + duration);
+    if(type==='weekly') expiry.setDate(now.getDate()+7*duration);
+    else expiry.setMonth(now.getMonth()+duration);
 
     const licenseData = {
         clientName,
@@ -251,107 +250,104 @@ document.getElementById('createForm').addEventListener('submit', async (e) => {
         deactivatedAt: null
     };
 
-    try {
-        showAlert('⏳ Creating license...', 'success');
-        const res = await fetch(`${API_URL}.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(licenseData)
+    try{
+        showAlert('⏳ Creating license...');
+        const res = await fetch(`${API_URL}.json`,{
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify(licenseData)
         });
         const data = await res.json();
-        const key = data.name; // Firebase unique key
+        const key = data.name; // Firebase key
 
-        showAlert(`✅ License created!<br><br><strong>Key:</strong> <span class="license-key">${key}</span><br><strong>Expires:</strong> ${expiry.toLocaleString()}`, 'success');
+        showAlert(`✅ License created!<br><strong>Key:</strong> <span class="license-key">${key}</span><br><strong>Expires:</strong> ${expiry.toLocaleString()}`);
         document.getElementById('createForm').reset();
-        setTimeout(() => loadLicenses(), 1000);
-    } catch (error) {
-        showAlert('❌ Error: ' + error.message, 'error');
+        setTimeout(()=> loadLicenses(),1000);
+    }catch(err){
+        showAlert('❌ Error: '+err.message,'error');
     }
 });
 
-// Load Licenses
-async function loadLicenses() {
+// Load licenses
+async function loadLicenses(){
     const activeContainer = document.getElementById('licensesTable');
     const deactivatedContainer = document.getElementById('deactivatedLicensesTable');
 
-    try {
+    try{
         const res = await fetch(`${API_URL}.json`);
         let data = await res.json();
         if(!data) data = {};
 
         const activeLicenses = {};
         const deactivatedLicenses = {};
-
-        for(const [key, license] of Object.entries(data)) {
-            if(license.isActive) activeLicenses[key] = license;
-            else deactivatedLicenses[key] = license;
+        for(const [key,license] of Object.entries(data)){
+            if(license.isActive) activeLicenses[key]=license;
+            else deactivatedLicenses[key]=license;
         }
 
-        // Display ACTIVE licenses
-        if(Object.keys(activeLicenses).length === 0) activeContainer.innerHTML = '<p style="text-align:center; color:#999;">No active licenses.</p>';
-        else {
-            let html = '<table><thead><tr><th>License Key</th><th>Client</th><th>Type</th><th>Account</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-            for(const [key, license] of Object.entries(activeLicenses)) {
-                const expiryDate = new Date(license.expiryDate);
-                const now = new Date();
-                const isExpired = now > expiryDate;
-                const status = isExpired ? 'Expired' : 'Active';
-                const statusClass = status === 'Active' ? 'status-active' : 'status-inactive';
-
-                html += `<tr>
+        // ACTIVE licenses
+        if(Object.keys(activeLicenses).length===0) activeContainer.innerHTML='<p style="text-align:center;color:#999;">No active licenses.</p>';
+        else{
+            let html='<table><thead><tr><th>License Key</th><th>Client</th><th>Type</th><th>Account</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+            for(const [key,license] of Object.entries(activeLicenses)){
+                const expiryDate=new Date(license.expiryDate);
+                const now=new Date();
+                const isExpired=now>expiryDate;
+                const status=isExpired?'Expired':'Active';
+                const statusClass=status==='Active'?'status-active':'status-inactive';
+                html+=`<tr>
                     <td>${key}</td>
                     <td>${license.clientName}</td>
                     <td>${license.type}</td>
-                    <td>${license.accountNumber || 'Not Used'}</td>
+                    <td>${license.accountNumber||'Not Used'}</td>
                     <td>${expiryDate.toLocaleDateString()}</td>
                     <td class="${statusClass}">${status}</td>
-                    <td>${!isExpired ? `<button class="btn btn-danger" onclick="deactivateLicense('${key}')">Deactivate</button>` : '-'}</td>
+                    <td>${!isExpired?`<button class="btn btn-danger" onclick="deactivateLicense('${key}')">Deactivate</button>`:'-'}</td>
                 </tr>`;
             }
-            html += '</tbody></table>';
-            activeContainer.innerHTML = html;
+            html+='</tbody></table>';
+            activeContainer.innerHTML=html;
         }
 
-        // Display DEACTIVATED licenses
-        if(Object.keys(deactivatedLicenses).length === 0) deactivatedContainer.innerHTML = '<p style="text-align:center; color:#999;">No deactivated licenses yet.</p>';
-        else {
-            let html = '<table><thead><tr><th>License Key</th><th>Client</th><th>Type</th><th>Account</th><th>Deactivated Date</th><th>Status</th></tr></thead><tbody>';
-            for(const [key, license] of Object.entries(deactivatedLicenses)) {
-                html += `<tr>
+        // DEACTIVATED licenses
+        if(Object.keys(deactivatedLicenses).length===0) deactivatedContainer.innerHTML='<p style="text-align:center;color:#999;">No deactivated licenses yet.</p>';
+        else{
+            let html='<table><thead><tr><th>License Key</th><th>Client</th><th>Type</th><th>Account</th><th>Deactivated Date</th><th>Status</th></tr></thead><tbody>';
+            for(const [key,license] of Object.entries(deactivatedLicenses)){
+                html+=`<tr>
                     <td>${key}</td>
                     <td>${license.clientName}</td>
                     <td>${license.type}</td>
-                    <td>${license.accountNumber || 'Not Used'}</td>
-                    <td>${license.deactivatedAt ? new Date(license.deactivatedAt).toLocaleDateString() : 'N/A'}</td>
+                    <td>${license.accountNumber||'Not Used'}</td>
+                    <td>${license.deactivatedAt?new Date(license.deactivatedAt).toLocaleDateString():'N/A'}</td>
                     <td class="status-inactive">Deactivated</td>
                 </tr>`;
             }
-            html += '</tbody></table>';
-            deactivatedContainer.innerHTML = html;
+            html+='</tbody></table>';
+            deactivatedContainer.innerHTML=html;
         }
 
-    } catch (error) {
-        console.error('Error:', error);
-        showAlert('❌ Error loading licenses: ' + error.message, 'error');
+    }catch(err){
+        console.error(err);
+        showAlert('❌ Error loading licenses: '+err.message,'error');
     }
 }
 
-// Deactivate License
-async function deactivateLicense(key) {
+// Deactivate license
+async function deactivateLicense(key){
     if(!confirm('⚡ INSTANT DEACTIVATION\n\nDeactivate this license?\n\nEA will stop within 10 SECONDS!')) return;
-
-    try {
-        await fetch(`${API_URL}/${key}.json`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive:false, deactivatedAt:new Date().toISOString() })
+    try{
+        await fetch(`${API_URL}/${key}.json`,{
+            method:'PATCH',
+            headers:{ 'Content-Type':'application/json' },
+            body:JSON.stringify({ isActive:false, deactivatedAt:new Date().toISOString() })
         });
-        showAlert('✅ License deactivated! ⚡ EA will stop within 10 SECONDS!', 'success');
-        setTimeout(() => loadLicenses(), 1000);
-    } catch (error) {
-        showAlert('❌ Error: ' + error.message, 'error');
+        showAlert('✅ License deactivated! ⚡ EA will stop within 10 SECONDS!');
+        setTimeout(()=> loadLicenses(),1000);
+    }catch(err){
+        showAlert('❌ Error: '+err.message,'error');
     }
 }
-    </script>
+            </script>
 </body>
 </html>
