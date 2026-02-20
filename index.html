@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartTrader EA - License Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus, select:focus { outline: none; border-color: #667eea; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-danger { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .status-active { color: #28a745; font-weight: 600; }
+        .status-inactive { color: #dc3545; font-weight: 600; }
+        .license-key {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .stat-box h3 { margin: 0; font-size: 2em; }
+        .stat-box p { margin: 5px 0 0 0; color: #666; }
+        .stat-active { background: #e8f5e9; }
+        .stat-active h3 { color: #2e7d32; }
+        .stat-deactivated { background: #ffebee; }
+        .stat-deactivated h3 { color: #c62828; }
+        .stat-expired { background: #fff3e0; }
+        .stat-expired h3 { color: #ef6c00; }
+        .stat-total { background: #e3f2fd; }
+        .stat-total h3 { color: #1565c0; }
+        #loginScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-box h2 { text-align: center; color: #667eea; margin-bottom: 30px; }
+        #mainContent { display: none; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h2>🔐 Admin Login</h2>
+            <div id="loginAlert" class="alert alert-error" style="display: none;"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter admin password">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Login</button>
+            </form>
+            <p style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
+                Default password: KHOKHAR BADSHAH 😈
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <div class="container">
+            <div class="header">
+                <h1>🔐 SmartTrader EA</h1>
+                <p>License Management System</p>
+            </div>
+
+            <div id="alertBox"></div>
+
+            <!-- Statistics Dashboard -->
+            <div class="card">
+                <h2>📊 Statistics</h2>
+                <div class="grid">
+                    <div class="stat-box stat-active">
+                        <h3 id="statActive">0</h3>
+                        <p>Active Licenses</p>
+                    </div>
+                    <div class="stat-box stat-deactivated">
+                        <h3 id="statDeactivated">0</h3>
+                        <p>Deactivated</p>
+                    </div>
+                    <div class="stat-box stat-expired">
+                        <h3 id="statExpired">0</h3>
+                        <p>Expired</p>
+                    </div>
+                    <div class="stat-box stat-total">
+                        <h3 id="statTotal">0</h3>
+                        <p>Total Created</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create License Form -->
+            <div class="card">
+                <h2>Create New License</h2>
+                <form id="createForm">
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="clientName">Client Name</label>
+                            <input type="text" id="clientName" required placeholder="Enter client name">
+                        </div>
+                        <div class="form-group">
+                            <label for="licenseType">License Type</label>
+                            <select id="licenseType" required>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (Weeks/Months)</label>
+                        <input type="number" id="duration" required min="1" value="1">
+                    </div>
+                    <button type="submit" class="btn">Generate License</button>
+                </form>
+            </div>
+
+            <!-- Active Licenses List -->
+            <div class="card">
+                <h2>✅ Active Licenses</h2>
+                <button class="btn" onclick="loadLicenses()">🔄 Refresh List</button>
+                <div id="licensesTable">
+                    <p style="text-align: center; padding: 20px; color: #999;">
+                        Loading licenses...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Deactivated Licenses List -->
+            <div class="card">
+                <h2>🔴 Deactivated Licenses</h2>
+                <div id="deactivatedLicensesTable">
+                    <p style="text-align: center; padding: 20px; color: #999;">
+                        Loading licenses...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/license';
+        const ADMIN_PASSWORD = 'admin123';
+
+        // Check if already logged in
+        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+            showMainContent();
+        }
+
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                showMainContent();
+            } else {
+                const loginAlert = document.getElementById('loginAlert');
+                loginAlert.textContent = '❌ Invalid password';
+                loginAlert.style.display = 'block';
+                setTimeout(() => loginAlert.style.display = 'none', 3000);
+            }
+        });
+
+        function showMainContent() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            loadLicenses();
+        }
+
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alertBox.innerHTML = '', 5000);
+        }
+
+        // Create License
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const clientName = document.getElementById('clientName').value;
+            const type = document.getElementById('licenseType').value;
+            const duration = parseInt(document.getElementById('duration').value);
+
+            try {
+                showAlert('⏳ Creating license...', 'success');
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'create', clientName, type, duration })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert(`✅ License created!<br><br><strong>Key:</strong> <span class="license-key">${data.licenseKey}</span><br><strong>Expires:</strong> ${new Date(data.expiryDate).toLocaleString()}`, 'success');
+                    document.getElementById('createForm').reset();
+                    
+                    // Update stats if provided
+                    if (data.stats) {
+                        updateStats(data.stats);
+                    }
+                    
+                    // Reload licenses
+                    setTimeout(() => loadLicenses(), 1000);
+                } else {
+                    showAlert('❌ ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Error: ' + error.message, 'error');
+            }
+        });
+
+        // Load Licenses
+        async function loadLicenses() {
+            try {
+                console.log('Loading licenses...');
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                console.log('Response:', data);
+                
+                if (data.success) {
+                    displayLicenses(data.licenses);
+                    updateStats(data.stats);
+                } else {
+                    showAlert('❌ Failed to load licenses', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('❌ Error loading licenses: ' + error.message, 'error');
+            }
+        }
+
+        // Update Statistics
+        function updateStats(stats) {
+            if (!stats) return;
+            document.getElementById('statActive').textContent = stats.totalActive || 0;
+            document.getElementById('statDeactivated').textContent = stats.totalDeactivated || 0;
+            document.getElementById('statExpired').textContent = stats.totalExpired || 0;
+            document.getElementById('statTotal').textContent = stats.totalCreated || 0;
+        }
+
+        // Display Licenses in TWO SECTIONS
+        function displayLicenses(licenses) {
+            const activeContainer = document.getElementById('licensesTable');
+            const deactivatedContainer = document.getElementById('deactivatedLicensesTable');
+            
+            if (!licenses || Object.keys(licenses).length === 0) {
+                activeContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No licenses found. Create one above!</p>';
+                deactivatedContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No deactivated licenses yet.</p>';
+                return;
+            }
+
+            // Separate active and deactivated licenses
+            const activeLicenses = {};
+            const deactivatedLicenses = {};
+            
+            for (const [key, license] of Object.entries(licenses)) {
+                if (license.isActive) {
+                    activeLicenses[key] = license;
+                } else {
+                    deactivatedLicenses[key] = license;
+                }
+            }
+
+            // Display ACTIVE licenses
+            if (Object.keys(activeLicenses).length === 0) {
+                activeContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No active licenses.</p>';
+            } else {
+                let html = '<table><thead><tr><th>License Key</th><th>Client</th><th>Type</th><th>Account</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+
+                for (const [key, license] of Object.entries(activeLicenses)) {
+                    const expiryDate = new Date(license.expiryDate);
+                    const now = new Date();
+                    const isExpired = now > expiryDate;
+                    const status = isExpired ? 'Expired' : 'Active';
+                    const statusClass = status === 'Active' ? 'status-active' : 'status-inactive';
+
+                    html += `<tr>
+                        <td><span class="license-key">${key}</span></td>
+                        <td>${license.clientName}</td>
+                        <td>${license.type}</td>
+                        <td>${license.accountNumber || 'Not Used'}</td>
+                        <td>${expiryDate.toLocaleDateString()}</td>
+                        <td class="${statusClass}">${status}</td>
+                        <td>${!isExpired ? `<button class="btn btn-danger" onclick="deactivateLicense('${key}')">Deactivate</button>` : '-'}</td>
+                    </tr>`;
+                }
+
+                html += '</tbody></table>';
+                activeContainer.innerHTML = html;
+            }
+
+            // Display DEACTIVATED licenses
+            if (Object.keys(deactivatedLicenses).length === 0) {
+                deactivatedContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No deactivated licenses yet.</p>';
+            } else {
+                let html = '<table><thead><tr><th>License Key</th><th>Client</th><th>Type</th><th>Account</th><th>Deactivated Date</th><th>Status</th></tr></thead><tbody>';
+
+                for (const [key, license] of Object.entries(deactivatedLicenses)) {
+                    const deactivatedDate = license.deactivatedAt ? new Date(license.deactivatedAt).toLocaleDateString() : 'N/A';
+
+                    html += `<tr>
+                        <td><span class="license-key">${key}</span></td>
+                        <td>${license.clientName}</td>
+                        <td>${license.type}</td>
+                        <td>${license.accountNumber || 'Not Used'}</td>
+                        <td>${deactivatedDate}</td>
+                        <td class="status-inactive">Deactivated</td>
+                    </tr>`;
+                }
+
+                html += '</tbody></table>';
+                deactivatedContainer.innerHTML = html;
+            }
+        }
+
+        // Deactivate License
+        async function deactivateLicense(licenseKey) {
+            if (!confirm('⚡ INSTANT DEACTIVATION\n\nDeactivate this license?\n\nEA will stop within 10 SECONDS!')) return;
+
+            try {
+                showAlert('⏳ Deactivating license...', 'success');
+                
+                const response = await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'deactivate', licenseKey })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ License deactivated!<br><br>⚡ EA will stop within <strong>10 SECONDS</strong>', 'success');
+                    
+                    // Update stats
+                    if (data.stats) {
+                        updateStats(data.stats);
+                    }
+                    
+                    // Reload licenses
+                    setTimeout(() => loadLicenses(), 1000);
+                } else {
+                    showAlert('❌ ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
